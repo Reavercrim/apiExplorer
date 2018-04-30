@@ -81,7 +81,7 @@ public:
     QListWidget *lw_users;
     QGroupBox *groupBox_6;
     QGridLayout *gridLayout_5;
-    QTextEdit *textEdit;
+    QTextEdit *te_info;
     QWidget *tab_ladder;
     QGroupBox *groupBox_5;
     QGridLayout *gridLayout_6;
@@ -311,11 +311,11 @@ public:
         gridLayout_5->setSpacing(6);
         gridLayout_5->setContentsMargins(11, 11, 11, 11);
         gridLayout_5->setObjectName(QStringLiteral("gridLayout_5"));
-        textEdit = new QTextEdit(groupBox_6);
-        textEdit->setObjectName(QStringLiteral("textEdit"));
-        textEdit->setReadOnly(true);
+        te_info = new QTextEdit(groupBox_6);
+        te_info->setObjectName(QStringLiteral("te_info"));
+        te_info->setReadOnly(true);
 
-        gridLayout_5->addWidget(textEdit, 0, 0, 1, 1);
+        gridLayout_5->addWidget(te_info, 0, 0, 1, 1);
 
 
         gridLayout_2->addWidget(groupBox_6, 1, 0, 1, 2);

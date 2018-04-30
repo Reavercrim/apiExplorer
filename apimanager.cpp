@@ -69,7 +69,7 @@ void ApiCall::forwardReply()
     QObject::connect(this, SIGNAL(sendReply(QNetworkReply*)), m_source, m_callback);
     emit sendReply(this->m_reply);
     this->m_caller->removeCall(this->m_id);
-    qDebug() << "forwarded" << this->m_id;
+    qDebug() << m_reply->error();
 }
 
 
@@ -80,12 +80,6 @@ void ApiCall::get()
     QObject::connect(m_reply, SIGNAL(finished()), this, SLOT(forwardReply()));
 }
 
-void ApiCall::post()
-{
-    /*m_request.setUrl(m_url);
-    m_reply = m_caller->getNAM()->post(m_request);
-    QObject::connect(m_reply, SIGNAL(finished()), this, SLOT(forwardReply()));*/
-}
 
 
 

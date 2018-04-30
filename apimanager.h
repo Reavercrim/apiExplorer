@@ -31,7 +31,6 @@ class ApiCall : public QObject
 public:
     ApiCall(QUrl url,QObject* source,const char* callback, int id, ApiCaller* caller);
     void get();
-    void post();
 
 signals:
     void sendReply(QNetworkReply* reply);

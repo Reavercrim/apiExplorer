@@ -2,6 +2,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QDate>
+#include <QMutex>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "saveconfig.h"
@@ -19,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     loadC();
     initEndpoint();
+    getGenders();
 
 }
 
@@ -47,7 +49,6 @@ void MainWindow::loadC()
 
 void MainWindow::on_cb_endpoint_currentIndexChanged(int id)
 {
-    getGenders();
     getUsers();
 }
 
@@ -69,8 +70,8 @@ void MainWindow::on_lw_users_currentRowChanged(int currentRow)
 
 void MainWindow::initEndpoint()
 {
-    ui->cb_endpoint->addItem("https://preprod.sgl.cyprx.cloud/");
     ui->cb_endpoint->addItem("https://api.smgl.ch/");
+    ui->cb_endpoint->addItem("https://preprod.sgl.cyprx.cloud/");
 }
 
 
@@ -88,13 +89,6 @@ void MainWindow::getGenders()
 
 void MainWindow::getUsers()
 {
-    while(ui->lw_users->count()>0)
-    {
-        delete ui->lw_users->takeItem(0);
-    }
-
-    users.erase(users.begin(),users.end());
-
     QUrl url(ui->cb_endpoint->currentText() + "users?token=" + ui->le_token->text());
 
     apiCaller->call(url,this,SLOT(displayUsers(QNetworkReply*)));
@@ -103,47 +97,79 @@ void MainWindow::getUsers()
 
 void MainWindow::displayGenders(QNetworkReply* reply)
 {
-    QString m_str(reply->readAll());
-    const QJsonArray  m_json = QJsonDocument::fromJson(m_str.toUtf8()).array();
-
-    for (int i=0; i<m_json.size(); i++)
+    if(reply->error() == QNetworkReply::NoError)
     {
-        ui->cb_gender->addItem(m_json[i]["name"].toString());
-    }
+        QString m_str(reply->readAll());
+        const QJsonArray  m_json = QJsonDocument::fromJson(m_str.toUtf8()).array();
 
+        for (int i=0; i<m_json.size(); i++)
+        {
+            ui->cb_gender->addItem(m_json[i]["name"].toString());
+        }
+
+        ui->te_info->append(QString::number(m_json.size()) + " gender loaded");
+    }
+    else
+    {
+        ui->te_info->append(reply->errorString());
+    }
 }
 
 void MainWindow::displayUsers(QNetworkReply* reply)
 {
-
-    QString m_str(reply->readAll());
-    const QJsonArray  m_json = QJsonDocument::fromJson(m_str.toUtf8()).array();
-
-    int id,gender;
-    QString firstname,lastname,nickname,mail,birthdate,city,zip,state,country;
-
-    for (int i=0; i<m_json.size(); i++)
+    if(reply->error() == QNetworkReply::NoError)
     {
-        id = m_json[i]["id"].toInt();
-        firstname = m_json[i]["firstname"].toString();
-        lastname = m_json[i]["lastname"].toString();
-        nickname = m_json[i]["nickname"].toString();
-        mail = m_json[i]["mail"].toString();
-        birthdate = m_json[i]["birthdate"].toString();
-        gender = m_json[i]["gender_id"].toInt();
+        QMutex mutex;
 
-        city = m_json[i]["address"]["locality"]["name"].toString();
-        zip = QString::number(m_json[i]["address"]["locality"]["postal_code"].toInt());
-        state = m_json[i]["address"]["locality"]["state"]["name"].toString();
-        country = m_json[i]["address"]["locality"]["state"]["country"]["name"].toString();
+        mutex.lock();
 
-        users.push_back(User(id,firstname,lastname,nickname,mail,birthdate,gender,0,"",city,zip,state,country));
+        while(ui->lw_users->count()>0)
+        {
+            delete ui->lw_users->takeItem(0);
+        }
+
+        users.erase(users.begin(),users.end());
+
+        QString m_str(reply->readAll());
+        const QJsonArray  m_json = QJsonDocument::fromJson(m_str.toUtf8()).array();
+
+        int id,gender;
+        QString firstname,lastname,nickname,mail,birthdate,city,zip,state,country;
+
+
+
+        for (int i=0; i<m_json.size(); i++)
+        {
+            id = m_json[i]["id"].toInt();
+            firstname = m_json[i]["firstname"].toString();
+            lastname = m_json[i]["lastname"].toString();
+            nickname = m_json[i]["nickname"].toString();
+            mail = m_json[i]["mail"].toString();
+            birthdate = m_json[i]["birthdate"].toString();
+            gender = m_json[i]["gender_id"].toInt();
+
+            city = m_json[i]["address"]["locality"]["name"].toString();
+            zip = QString::number(m_json[i]["address"]["locality"]["postal_code"].toInt());
+            state = m_json[i]["address"]["locality"]["state"]["name"].toString();
+            country = m_json[i]["address"]["locality"]["state"]["country"]["name"].toString();
+
+
+            users.push_back(User(id,firstname,lastname,nickname,mail,birthdate,gender,0,"",city,zip,state,country));
+        }
+
+        mutex.unlock();
+
+        for (int i=0; i< users.size(); i++)
+        {
+            User u = users.at(i);
+            ui->lw_users->addItem(u.firstname + " " + u.lastname);
+        }
+
+        ui->te_info->append(QString::number(users.size()) + " users loaded");
     }
-
-    for (int i=0; i< users.size(); i++)
+    else
     {
-        User u = users.at(i);
-        ui->lw_users->addItem(u.firstname + " " + u.lastname);
+        ui->te_info->append(reply->errorString());
     }
 
 }

@@ -263,7 +263,7 @@
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
            <item row="0" column="0">
-            <widget class="QTextEdit" name="textEdit">
+            <widget class="QTextEdit" name="te_info">
              <property name="readOnly">
               <bool>true</bool>
              </property>
